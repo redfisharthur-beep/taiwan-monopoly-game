@@ -198,7 +198,7 @@ function startTurn(room) {
             if (!nextTurn(room)) {
                 startTurn(room);
             }
-        }, 2000);
+        }, 5000); // 改為 5 秒
         return;
     }
 
@@ -224,7 +224,7 @@ function startTurn(room) {
 
         setTimeout(() => {
             handleTileEvent(room, currentPlayer, currentTile);
-        }, 2000);
+        }, 5000); // 改為 5 秒
     }, 1500);
 }
 
@@ -253,7 +253,7 @@ function handleTileEvent(room, player, tile) {
                 
                 setTimeout(() => {
                     io.to(player.id).emit('promptBuyout', { price: tile.price * 3, money: player.money, name: tile.name });
-                }, 2000);
+                }, 5000); // 改為 5 秒
             } else {
                 player.money = 0;
                 player.pos = 0;
@@ -294,8 +294,8 @@ function handleTileEvent(room, player, tile) {
 
             setTimeout(() => {
                 handleTileEvent(room, player, currentTile);
-            }, 2000);
-        }, 2000);
+            }, 5000); // 改為 5 秒
+        }, 5000); // 改為 5 秒
 
     } else if (tile.name === "桃園") {
         player.pos = 5; 

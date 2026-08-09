@@ -139,7 +139,6 @@
             flex-wrap: wrap;
             z-index: 10;
         }
-        /* 動物遊玩的圖示恢復為原本的 1.2 倍 (原本基準 38px * 1.2 = 46px) */
         .avatar-img {
             width: 46px;
             height: 46px;
@@ -202,7 +201,6 @@
             }
             .tile { font-size: 0.9rem; }
             .tile span { font-size: 0.95rem; }
-            /* 手機版對應調整為 1.2 倍 (原本 28px * 1.2 = 34px) */
             .avatar-img { width: 34px; height: 34px; }
             #center-toast { width: 85%; font-size: 1.2rem; padding: 20px; }
         }
@@ -258,6 +256,7 @@
     <script>
         const socket = io();
         let countdownTimer = null;
+        let toastTimer = null; // 新增：用於控制提示畫面的計時器
         let myId = null;
 
         socket.on('connect', () => { myId = socket.id; });
@@ -301,15 +300,20 @@
         function startGame() { socket.emit('startGame'); }
 
         socket.on('centerAlert', (msg) => {
+            clearTimeout(toastTimer); // 清除前一個計時器，避免畫面太早關閉
             const toast = document.getElementById('center-toast');
             toast.innerHTML = msg;
             toast.style.display = 'block';
             toast.style.width = 'auto';
             toast.style.maxWidth = 'none';
-            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+            
+            // 設定為 5 秒鐘 (5000 毫秒) 後關閉
+            toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 5000); 
         });
 
         socket.on('gameOver', (ranking) => {
+            clearTimeout(toastTimer); // 新增：結束時強制清除計時器，避免排行榜被自動關閉
+            
             let html = `<div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; color: #5A4A42;">🏆 排行榜 🏆</div>`;
             ranking.forEach((r, idx) => {
                 let trophy = idx === 0 ? '🏆 ' : '';
