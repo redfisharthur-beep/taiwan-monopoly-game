@@ -12,35 +12,34 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 24格遊戲地圖格子定義與價格
+// 金錢全部降為 10%
 const board = [
     { name: "起點", type: "start", price: 0 },
-    { name: "宜蘭", type: "land", group: "East", price: 2000, owner: null },
-    { name: "花蓮", type: "land", group: "East", price: 2000, owner: null },
+    { name: "宜蘭", type: "land", group: "East", price: 200, owner: null },
+    { name: "花蓮", type: "land", group: "East", price: 200, owner: null },
     { name: "機會", type: "card", price: 0 },
-    { name: "台東", type: "land", group: "East", price: 2000, owner: null },
+    { name: "台東", type: "land", group: "East", price: 200, owner: null },
     { name: "旅行中", type: "travel", price: 0 },
-    { name: "屏東", type: "land", group: "East", price: 2000, owner: null },
-    { name: "高雄", type: "land", group: "South", price: 2500, owner: null },
-    { name: "綠島", type: "land", group: "South", price: 2500, owner: null },
-    { name: "台南", type: "land", group: "South", price: 2500, owner: null },
-    { name: "澎湖", type: "land", group: "South", price: 2500, owner: null },
+    { name: "屏東", type: "land", group: "East", price: 200, owner: null },
+    { name: "高雄", type: "land", group: "South", price: 250, owner: null },
+    { name: "綠島", type: "land", group: "South", price: 250, owner: null },
+    { name: "台南", type: "land", group: "South", price: 250, owner: null },
+    { name: "澎湖", type: "land", group: "South", price: 250, owner: null },
     { name: "命運", type: "card", price: 0 },
-    { name: "嘉義", type: "land", group: "Central", price: 2300, owner: null },
-    { name: "雲林", type: "land", group: "Central", price: 2300, owner: null },
-    { name: "彰化", type: "land", group: "Central", price: 2300, owner: null },
+    { name: "嘉義", type: "land", group: "Central", price: 230, owner: null },
+    { name: "雲林", type: "land", group: "Central", price: 230, owner: null },
+    { name: "彰化", type: "land", group: "Central", price: 230, owner: null },
     { name: "南投", type: "action", price: 0 },
-    { name: "台中", type: "land", group: "North-C", price: 2800, owner: null },
-    { name: "苗栗", type: "land", group: "North-C", price: 2800, owner: null },
-    { name: "新竹", type: "land", group: "North-C", price: 2800, owner: null },
+    { name: "台中", type: "land", group: "North-C", price: 280, owner: null },
+    { name: "苗栗", type: "land", group: "North-C", price: 280, owner: null },
+    { name: "新竹", type: "land", group: "North-C", price: 280, owner: null },
     { name: "桃園", type: "action", price: 0 },
-    { name: "台北", type: "land", group: "North", price: 3000, owner: null },
-    { name: "新北", type: "land", group: "North", price: 3000, owner: null },
-    { name: "金門", type: "land", group: "North", price: 3000, owner: null },
-    { name: "基隆", type: "land", group: "North", price: 3000, owner: null }
+    { name: "台北", type: "land", group: "North", price: 300, owner: null },
+    { name: "新北", type: "land", group: "North", price: 300, owner: null },
+    { name: "金門", type: "land", group: "North", price: 300, owner: null },
+    { name: "基隆", type: "land", group: "North", price: 300, owner: null }
 ];
 
-// 4 個玩家的專屬設定
 const playerProfiles = [
     { img: "pig.png", color: "#FF9F9F" },
     { img: "cat.png", color: "#9FBFFF" },
@@ -64,7 +63,7 @@ io.on('connection', (socket) => {
             players: [{
                 id: socket.id,
                 name: playerName,
-                money: 20000,
+                money: 2000, // 初始金錢降為 10%
                 pos: 0,
                 profile: playerProfiles[0],
                 skipTurns: 0
@@ -89,7 +88,7 @@ io.on('connection', (socket) => {
         room.players.push({
             id: socket.id,
             name: playerName,
-            money: 20000,
+            money: 2000, // 初始金錢降為 10%
             pos: 0,
             profile: playerProfiles[profileIndex],
             skipTurns: 0
@@ -198,7 +197,7 @@ function startTurn(room) {
             if (!nextTurn(room)) {
                 startTurn(room);
             }
-        }, 5000); // 改為 5 秒
+        }, 5000); 
         return;
     }
 
@@ -214,8 +213,9 @@ function startTurn(room) {
         let msg = `🎲 ${currentPlayer.name} 擲出了 ${dice} 點！<br>來到了【${currentTile.name}】`;
         
         if (currentPlayer.pos < oldPos || (currentPlayer.pos === 0 && dice > 0)) {
-            currentPlayer.money += 10000;
-            msg += `<br>經過起點，領取薪水 10000！`;
+            currentPlayer.money += 1000; // 起點薪水降為 10%
+            msg += `<br>經過起點，領取薪水 1000！`;
+            io.to(room.roomName).emit('playSound', 'money'); // 觸發掉錢音效
         }
         
         io.to(room.roomName).emit('centerAlert', msg);
@@ -224,7 +224,7 @@ function startTurn(room) {
 
         setTimeout(() => {
             handleTileEvent(room, currentPlayer, currentTile);
-        }, 5000); // 改為 5 秒
+        }, 5000); 
     }, 1500);
 }
 
@@ -253,7 +253,7 @@ function handleTileEvent(room, player, tile) {
                 
                 setTimeout(() => {
                     io.to(player.id).emit('promptBuyout', { price: tile.price * 3, money: player.money, name: tile.name });
-                }, 5000); // 改為 5 秒
+                }, 5000); 
             } else {
                 player.money = 0;
                 player.pos = 0;
@@ -284,8 +284,9 @@ function handleTileEvent(room, player, tile) {
             let subMsg = `🎲 ${player.name} 再次擲出了 ${dice} 點！<br>來到了【${currentTile.name}】`;
             
             if (player.pos < oldPos || (player.pos === 0 && dice > 0)) {
-                player.money += 10000;
-                subMsg += `<br>經過起點，領取薪水 10000！`;
+                player.money += 1000; // 起點薪水降為 10%
+                subMsg += `<br>經過起點，領取薪水 1000！`;
+                io.to(room.roomName).emit('playSound', 'money'); // 觸發掉錢音效
             }
             
             io.to(room.roomName).emit('centerAlert', subMsg);
@@ -294,8 +295,8 @@ function handleTileEvent(room, player, tile) {
 
             setTimeout(() => {
                 handleTileEvent(room, player, currentTile);
-            }, 5000); // 改為 5 秒
-        }, 5000); // 改為 5 秒
+            }, 5000); 
+        }, 5000); 
 
     } else if (tile.name === "桃園") {
         player.pos = 5; 
@@ -316,23 +317,24 @@ function handleTileEvent(room, player, tile) {
 }
 
 function handleCardEvent(room, player, isChance) {
+    // 所有的卡牌金錢數值全部降為 10%
     let effects = [];
     if (isChance) {
         effects = [
-            { type: 'money', val: 10000, desc: '獲得獎勵金錢 10000！', isReward: true },
-            { type: 'money', val: 500, desc: '獲得獎勵金錢 500！', isReward: true },
+            { type: 'money', val: 1000, desc: '獲得獎勵金錢 1000！', isReward: true },
+            { type: 'money', val: 50, desc: '獲得獎勵金錢 50！', isReward: true },
             { type: 'land_get', desc: '幸運降臨！隨機獲得一塊未被佔領的地盤！', isReward: true },
-            { type: 'money', val: -500, desc: '遭遇倒霉事...失去 500！', isReward: false },
+            { type: 'money', val: -50, desc: '遭遇倒霉事...失去 50！', isReward: false },
             { type: 'land_lose', desc: '真不幸...隨機失去一塊已佔領的地盤！', isReward: false },
             { type: 'land_grab_three', desc: '逆轉勝來了！隨機豪取 3 塊地盤（無論是否有所屬）！', isReward: true },
-            { type: 'money', val: 30000, desc: '天選之人，恭喜中樂透！獲得 3 萬獎金！', isReward: true }
+            { type: 'money', val: 3000, desc: '天選之人，恭喜中樂透！獲得 3000 獎金！', isReward: true }
         ];
     } else {
         effects = [
-            { type: 'money', val: 500, desc: '獲得獎勵金錢 500！', isReward: true },
+            { type: 'money', val: 50, desc: '獲得獎勵金錢 50！', isReward: true },
             { type: 'land_get', desc: '幸運降臨！隨機獲得一塊未被佔領的地盤！', isReward: true },
-            { type: 'money', val: -10000, desc: '遭遇大災難...失去 10000！', isReward: false },
-            { type: 'money', val: -500, desc: '遭遇倒霉事...失去 500！', isReward: false },
+            { type: 'money', val: -1000, desc: '遭遇大災難...失去 1000！', isReward: false },
+            { type: 'money', val: -50, desc: '遭遇倒霉事...失去 50！', isReward: false },
             { type: 'land_lose', desc: '真不幸...隨機失去一塊已佔領的地盤！', isReward: false },
             { type: 'travel_forced', desc: '出差辛苦了~強制移動到旅行中，暫停 2 回合！', isReward: false }
         ];
@@ -354,8 +356,8 @@ function handleCardEvent(room, player, isChance) {
             targetLand.owner = player.id;
             msg += `<span style="color:#FF7F7F">${choice.desc} 獲得了【${targetLand.name}】！</span>`;
         } else {
-            player.money += 2000;
-            msg += `<span style="color:#FF7F7F">場上已無未被佔領的地盤，改為獲得獎勵 2000！</span>`;
+            player.money += 200; // 場上沒空地的替代補償金錢降為 10%
+            msg += `<span style="color:#FF7F7F">場上已無未被佔領的地盤，改為獲得獎勵 200！</span>`;
         }
     } else if (choice.type === 'land_lose') {
         let playerLands = room.board.filter(b => b.type === 'land' && b.owner === player.id);
@@ -390,10 +392,15 @@ function handleCardEvent(room, player, isChance) {
 
     io.to(room.roomName).emit('centerAlert', msg);
     io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' ').replace(/<[^>]+>/g, ''));
-    if (!nextTurn(room)) {
-        io.to(room.roomName).emit('updateGame', room);
-        startTurn(room);
-    }
+    io.to(room.roomName).emit('updateGame', room); // 先更新畫面，讓大家看到錢的變動
+
+    // 加入 3 秒鐘延遲，讓大家看完卡牌內容，再輪到下一位
+    setTimeout(() => {
+        if (!nextTurn(room)) {
+            io.to(room.roomName).emit('updateGame', room);
+            startTurn(room);
+        }
+    }, 3000);
 }
 
 function nextTurn(room) {
