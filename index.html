@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>日系可愛微旅行大富翁</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400&display=swap');
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #FFF8F0;
+            color: #5A4A42;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 400;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .card-box {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 8px 20px rgba(139, 115, 85, 0.08);
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            border: 3px dashed #EEDDCC;
+        }
+
+        #lobby-screen {
+            background-color: #E8ECEF;
+            border: 3px dashed #D0D7DE;
+        }
+
+        input, button {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 400;
+            padding: 12px 18px;
+            border-radius: 15px;
+            border: 2px solid #D5C8BC;
+            outline: none;
+            font-size: 1.1rem;
+            margin: 5px;
+        }
+
+        button {
+            background-color: #D4C5B9;
+            color: #5A4A42;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 0 #B8A89A;
+        }
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        button:disabled {
+            background-color: #E0E0E0;
+            box-shadow: 0 4px 0 #B0B0B0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .board-container {
+            display: grid;
+            width: 100%;
+            max-width: 700px;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 6px;
+            background: #FAF3E8;
+            padding: 12px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .tile {
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            position: relative;
+            border: 3px solid transparent;
+            overflow: hidden;
+            background-color: #FFFFFF;
+        }
+
+        .tile span { font-size: 1.25rem; font-weight: bold; opacity: 0.85; margin-top: 2px; }
+
+        .group-North { background-color: #FFD6E0; }
+        .group-North-C { background-color: #FFF5BA; }
+        .group-Central { background-color: #D4F0D0; }
+        .group-South { background-color: #D6EFFF; }
+        .group-East { background-color: #E8D6FF; }
+        
+        .t-start { background-color: #FFD1A9; }
+        .t-card { background-color: #FFB37C; color: white; }
+        .t-action { background-color: #9ED5C5; color: white; }
+
+        .center-map {
+            grid-column: 2 / 6;
+            grid-row: 2 / 8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: transparent;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .center-map img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .player-avatars {
+            position: absolute;
+            bottom: 2px;
+            display: flex;
+            gap: 2px;
+            justify-content: center;
+            width: 100%;
+            flex-wrap: wrap;
+            z-index: 10;
+        }
+        /* 動物遊玩的圖示恢復為原本的 1.2 倍 (原本基準 38px * 1.2 = 46px) */
+        .avatar-img {
+            width: 46px;
+            height: 46px;
+            object-fit: contain;
+            background: transparent;
+            border: none;
+        }
+
+        .control-panel {
+            margin-top: 15px;
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 700px;
+            border: 3px dashed #EEDDCC;
+        }
+
+        .log-box {
+            background: #FFF8F0;
+            color: #5A4A42;
+            padding: 15px;
+            border-radius: 15px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 1rem;
+            text-align: left;
+            margin-top: 15px;
+            border: 2px solid #EEDDCC;
+            line-height: 1.5;
+        }
+
+        #center-toast {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 5px solid #FFD1A9;
+            border-radius: 30px;
+            padding: 30px 40px;
+            font-size: 1.5rem;
+            color: #5A4A42;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 600px) {
+            .board-container {
+                gap: 3px;
+                padding: 6px;
+            }
+            .tile { font-size: 0.9rem; }
+            .tile span { font-size: 0.95rem; }
+            /* 手機版對應調整為 1.2 倍 (原本 28px * 1.2 = 34px) */
+            .avatar-img { width: 34px; height: 34px; }
+            #center-toast { width: 85%; font-size: 1.2rem; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="lobby-screen" class="card-box" style="margin-top: 20px;">
+        <img src="/gogotwiwan.png" alt="Gogotwiwan" style="width: 70%; height: auto; margin-bottom: 15px; object-fit: contain;">
+        <input type="text" id="player-name" style="font-size: 1.2rem; font-weight: normal;" placeholder="請輸入名字">
+        <br>
+        <button onclick="createRoom()" style="font-size: 1.2rem; font-weight: normal;">建立房間</button>
+        <hr style="border: 0; border-top: 2px dashed #D0D7DE; margin: 15px 0;">
+        <div style="font-size: 1.1rem; margin-bottom: 10px; font-weight: normal;">房間列表</div>
+        <div id="room-list"></div>
+    </div>
+
+    <div id="center-toast"></div>
+
+    <div id="game-screen" style="display:none; width: 100%; flex-direction: column; align-items: center;">
+        <div class="card-box" style="margin-bottom: 10px; padding: 15px;">
+            <div id="top-turn-area" style="margin-bottom: 10px;">
+                <span id="top-turn-text" style="font-size: 1.2rem; color: #B8A89A; font-weight: bold;">準備中</span>
+            </div>
+
+            <div id="decision-box" style="display:none; margin-top:5px;">
+                <div>是否購買此土地 (<span id="countdown">5</span>秒)</div>
+                <button onclick="sendBuy(true)">購買</button>
+                <button onclick="sendBuy(false)">路過</button>
+            </div>
+            
+            <div id="buyout-box" style="display:none; margin-top:5px;">
+                <div id="buyout-text">是否花費 3 倍價格強制收購此地盤 (<span>5</span>秒)</div>
+                <button id="buyout-btn" onclick="buyoutLand()">強制收購</button>
+                <button onclick="skipBuyout()">不需要</button>
+            </div>
+
+            <div id="players-status" style="line-height: 1.8; margin-top: 10px;"></div>
+            <button id="start-btn" style="display:none; margin-top:10px;" onclick="startGame()">啟程</button>
+        </div>
+
+        <div class="board-container" id="board-grid">
+            <div class="center-map">
+                <img src="/taiwan.png" alt="台灣地圖">
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="log-box" id="game-logs"></div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let countdownTimer = null;
+        let myId = null;
+
+        socket.on('connect', () => { myId = socket.id; });
+
+        socket.on('roomList', (rooms) => {
+            let listDiv = document.getElementById('room-list');
+            listDiv.innerHTML = '';
+            for (let rName in rooms) {
+                let r = rooms[rName];
+                listDiv.innerHTML += `
+                    <div style="background: #FFFFFF; padding: 10px; border-radius: 10px; margin: 8px 0; display:flex; justify-content:space-between; align-items:center;">
+                        <span>🏠 ${rName} (${r.players.length}/4)</span>
+                        <button onclick="joinRoom('${rName}')" style="padding: 6px 12px; font-size: 1rem;">加入</button>
+                    </div>
+                `;
+            }
+        });
+
+        socket.on('errorMsg', (msg) => { alert(msg); });
+
+        function createRoom() {
+            let name = document.getElementById('player-name').value.trim();
+            if (!name) return alert('請先輸入名字！');
+            let roomName = name.slice(0, 4) + '的房間';
+            socket.emit('createRoom', { roomName, playerName: name });
+            enterGameUI();
+        }
+
+        function joinRoom(roomName) {
+            let name = document.getElementById('player-name').value.trim();
+            if (!name) return alert('請先輸入名字！');
+            socket.emit('joinRoom', { roomName, playerName: name });
+            enterGameUI();
+        }
+
+        function enterGameUI() {
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+        }
+
+        function startGame() { socket.emit('startGame'); }
+
+        socket.on('centerAlert', (msg) => {
+            const toast = document.getElementById('center-toast');
+            toast.innerHTML = msg;
+            toast.style.display = 'block';
+            toast.style.width = 'auto';
+            toast.style.maxWidth = 'none';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        });
+
+        socket.on('gameOver', (ranking) => {
+            let html = `<div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; color: #5A4A42;">🏆 排行榜 🏆</div>`;
+            ranking.forEach((r, idx) => {
+                let trophy = idx === 0 ? '🏆 ' : '';
+                html += `
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #FAF3E8; padding: 10px 15px; border-radius: 12px; margin: 8px 0; border: 2px solid ${r.profile.color};">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.2rem; font-weight: bold;">${trophy}${idx + 1}</span>
+                            <img src="/${r.profile.img}" style="width: 48px; vertical-align: middle;">
+                            <span>${r.name}</span>
+                        </div>
+                        <div style="text-align: right; font-size: 0.95rem;">
+                            <div>總資產 <b>${r.totalAssets}</b></div>
+                            <div style="font-size: 0.85rem; opacity: 0.7;">(現金 ${r.money} + 地盤 ${r.landValue})</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `<button onclick="closeRanking()" style="margin-top: 15px; background-color: #D4C5B9; color: #5A4A42; border: 2px solid #D5C8BC; border-radius: 15px; padding: 10px 20px; font-size: 1.1rem; cursor: pointer;">關閉</button>`;
+            
+            const toast = document.getElementById('center-toast');
+            toast.innerHTML = html;
+            toast.style.display = 'block';
+            toast.style.width = '90%';
+            toast.style.maxWidth = '500px';
+
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'block';
+        });
+
+        function closeRanking() {
+            document.getElementById('center-toast').style.display = 'none';
+            location.reload();
+        }
+
+        socket.on('updateGame', (room) => {
+            renderBoard(room);
+            renderStatus(room);
+
+            if (!room.started && room.host === myId) {
+                document.getElementById('start-btn').style.display = 'inline-block';
+            } else {
+                document.getElementById('start-btn').style.display = 'none';
+            }
+
+            let currentPlayer = room.players[room.turnIndex];
+            let topTurnArea = document.getElementById('top-turn-area');
+            
+            let statusText = room.started ? `輪到 ${currentPlayer ? currentPlayer.name : ''} 進行操作 (第 ${room.round}/20 輪)` : '遊戲準備中';
+            topTurnArea.innerHTML = `<span style="font-size: 1.2rem; color: #B8A89A; font-weight: bold;">${statusText}</span>`;
+        });
+
+        socket.on('promptBuy', () => {
+            clearInterval(countdownTimer);
+            let box = document.getElementById('decision-box');
+            let topTurnArea = document.getElementById('top-turn-area');
+            topTurnArea.style.display = 'none';
+            box.style.display = 'block';
+            
+            let timeLeft = 5;
+            document.getElementById('countdown').innerText = timeLeft;
+            countdownTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('countdown').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    box.style.display = 'none';
+                    topTurnArea.style.display = 'block';
+                    sendBuy(false);
+                }
+            }, 1000);
+        });
+
+        function sendBuy(buy) {
+            clearInterval(countdownTimer);
+            document.getElementById('decision-box').style.display = 'none';
+            document.getElementById('top-turn-area').style.display = 'block';
+            socket.emit('buyDecision', { buy });
+        }
+
+        socket.on('promptBuyout', ({ price, money, name }) => {
+            clearInterval(countdownTimer);
+            document.getElementById('top-turn-area').style.display = 'none';
+            let box = document.getElementById('buyout-box');
+            box.style.display = 'block';
+            let btn = document.getElementById('buyout-btn');
+            let textDiv = document.getElementById('buyout-text');
+            textDiv.innerHTML = `是否花費 ${price} (3倍) 強制收購【${name}】 (<span id="buyout-countdown" style="color:#FF7F7F;">5</span>秒)`;
+            
+            if (money < price) {
+                btn.disabled = true;
+                btn.title = "存款不足";
+            } else {
+                btn.disabled = false;
+                btn.title = "";
+            }
+
+            let timeLeft = 5;
+            countdownTimer = setInterval(() => {
+                timeLeft--;
+                let cdEl = document.getElementById('buyout-countdown');
+                if (cdEl) cdEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    box.style.display = 'none';
+                    document.getElementById('top-turn-area').style.display = 'block';
+                    skipBuyout();
+                }
+            }, 1000);
+        });
+
+        function buyoutLand() {
+            clearInterval(countdownTimer);
+            document.getElementById('buyout-box').style.display = 'none';
+            document.getElementById('top-turn-area').style.display = 'block';
+            socket.emit('buyoutLand');
+        }
+        function skipBuyout() {
+            clearInterval(countdownTimer);
+            document.getElementById('buyout-box').style.display = 'none';
+            document.getElementById('top-turn-area').style.display = 'block';
+            socket.emit('skipBuyout');
+        }
+
+        socket.on('log', (msg) => {
+            let logBox = document.getElementById('game-logs');
+            logBox.innerHTML += `<div>🐾 ${msg}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        });
+
+        const mapIndices = [
+            {r: 0, c: 5}, {r: 1, c: 5}, {r: 2, c: 5}, {r: 3, c: 5}, {r: 4, c: 5}, {r: 5, c: 5},
+            {r: 6, c: 5}, {r: 7, c: 5}, {r: 7, c: 4}, {r: 7, c: 3}, {r: 7, c: 2}, {r: 7, c: 1},
+            {r: 7, c: 0}, {r: 6, c: 0}, {r: 5, c: 0}, {r: 4, c: 0}, {r: 3, c: 0}, {r: 2, c: 0},
+            {r: 1, c: 0}, {r: 0, c: 0}, {r: 0, c: 1}, {r: 0, c: 2}, {r: 0, c: 3}, {r: 0, c: 4}
+        ];
+
+        function renderBoard(room) {
+            let container = document.getElementById('board-grid');
+            let centerMapHTML = container.querySelector('.center-map').outerHTML;
+            container.innerHTML = centerMapHTML;
+
+            room.board.forEach((tile, index) => {
+                let pos = mapIndices[index];
+                let tileDiv = document.createElement('div');
+                tileDiv.className = 'tile';
+                tileDiv.style.gridRow = pos.r + 1;
+                tileDiv.style.gridColumn = pos.c + 1;
+
+                if (tile.type === 'start') tileDiv.classList.add('t-start');
+                else if (tile.type === 'card') tileDiv.classList.add('t-card');
+                else if (tile.type === 'action' || tile.type === 'travel') tileDiv.classList.add('t-action');
+                else if (tile.group) tileDiv.classList.add(`group-${tile.group}`);
+
+                let nameColorStyle = '';
+                if (tile.owner) {
+                    let ownerObj = room.players.find(p => p.id === tile.owner);
+                    if (ownerObj) {
+                        tileDiv.style.borderColor = ownerObj.profile.color;
+                        tileDiv.style.borderWidth = "6px";
+                        tileDiv.style.boxShadow = "inset 0 0 0 2px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.15)";
+                        
+                        if (ownerObj.profile.img === 'pig.png') {
+                            nameColorStyle = `color: #8B0000; font-weight: normal;`;
+                        } else if (ownerObj.profile.img === 'cat.png') {
+                            nameColorStyle = `color: #00008B; font-weight: normal;`;
+                        } else if (ownerObj.profile.img === 'dog.png') {
+                            nameColorStyle = `color: #006400; font-weight: normal;`;
+                        } else if (ownerObj.profile.img === 'bear.png') {
+                            nameColorStyle = `color: #FF8C00; font-weight: bold;`;
+                        } else {
+                            nameColorStyle = `color: ${ownerObj.profile.color}; font-weight: bold;`;
+                        }
+                    }
+                }
+
+                let html = `<div style="${nameColorStyle}">${tile.name}</div>`;
+                if (tile.price > 0) html += `<span>${tile.price}</span>`;
+
+                let tokensHtml = '<div class="player-avatars">';
+                room.players.forEach(p => {
+                    if (p.pos === index) {
+                        tokensHtml += `<img src="/${p.profile.img}" class="avatar-img" title="${p.name}">`;
+                    }
+                });
+                tokensHtml += '</div>';
+
+                tileDiv.innerHTML = html + tokensHtml;
+                container.appendChild(tileDiv);
+            });
+        }
+
+        function renderStatus(room) {
+            let statusDiv = document.getElementById('players-status');
+            statusDiv.innerHTML = '';
+            room.players.forEach((p, idx) => {
+                let isCurrent = (room.turnIndex === idx && room.started);
+                statusDiv.innerHTML += `
+                    <span style="display:inline-block; margin: 3px; padding: 4px 10px; border-radius: 20px; border: 2px solid ${p.profile.color}; background: ${isCurrent ? '#FFF3B0' : '#FFF'}; font-weight: ${isCurrent ? 'bold' : 'normal'};">
+                        <img src="/${p.profile.img}" style="width: 32px; vertical-align:middle;"> 
+                        ${p.name} ${p.money} 
+                        ${p.skipTurns > 0 ? `<span style="color:#FF7F7F;">(暫停${p.skipTurns})</span>` : ''}
+                    </span>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
