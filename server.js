@@ -277,10 +277,11 @@ function handleTileEvent(room, player, tile) {
                     io.to(player.id).emit('promptBuyout', { price: tile.price * 3, money: player.money, name: tile.name });
                 }, 5000); 
             } else {
-                player.money = 0;
+                // 破產：回到起點、給予急難救助金 2000、暫停 2 回合
+                player.money = 2000;
                 player.pos = 0;
                 player.skipTurns = 2;
-                let msg = `💥 ${player.name} 破產！<br>無力支付過路費，強制回到起點，暫停 2 回合（無薪水）！`;
+                let msg = `💥 ${player.name} 破產！<br>無力支付過路費，強制回到起點，獲得急難救助金 2000，暫停 2 回合！`;
                 io.to(room.roomName).emit('centerAlert', msg);
                 io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' '));
                 if (!nextTurn(room)) {
