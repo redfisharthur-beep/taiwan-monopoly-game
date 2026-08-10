@@ -12,32 +12,32 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 金錢全部降為 10%
+// 金錢降為 10%，地盤預設升級等級為 0
 const board = [
     { name: "起點", type: "start", price: 0 },
-    { name: "宜蘭", type: "land", group: "East", price: 200, owner: null },
-    { name: "花蓮", type: "land", group: "East", price: 200, owner: null },
+    { name: "宜蘭", type: "land", group: "East", price: 200, owner: null, upgradeLevel: 0 },
+    { name: "花蓮", type: "land", group: "East", price: 200, owner: null, upgradeLevel: 0 },
     { name: "機會", type: "card", price: 0 },
-    { name: "台東", type: "land", group: "East", price: 200, owner: null },
+    { name: "台東", type: "land", group: "East", price: 200, owner: null, upgradeLevel: 0 },
     { name: "旅行中", type: "travel", price: 0 },
-    { name: "屏東", type: "land", group: "East", price: 200, owner: null },
-    { name: "高雄", type: "land", group: "South", price: 250, owner: null },
-    { name: "綠島", type: "land", group: "South", price: 250, owner: null },
-    { name: "台南", type: "land", group: "South", price: 250, owner: null },
-    { name: "澎湖", type: "land", group: "South", price: 250, owner: null },
+    { name: "屏東", type: "land", group: "East", price: 200, owner: null, upgradeLevel: 0 },
+    { name: "高雄", type: "land", group: "South", price: 250, owner: null, upgradeLevel: 0 },
+    { name: "綠島", type: "land", group: "South", price: 250, owner: null, upgradeLevel: 0 },
+    { name: "台南", type: "land", group: "South", price: 250, owner: null, upgradeLevel: 0 },
+    { name: "澎湖", type: "land", group: "South", price: 250, owner: null, upgradeLevel: 0 },
     { name: "命運", type: "card", price: 0 },
-    { name: "嘉義", type: "land", group: "Central", price: 230, owner: null },
-    { name: "雲林", type: "land", group: "Central", price: 230, owner: null },
-    { name: "彰化", type: "land", group: "Central", price: 230, owner: null },
+    { name: "嘉義", type: "land", group: "Central", price: 230, owner: null, upgradeLevel: 0 },
+    { name: "雲林", type: "land", group: "Central", price: 230, owner: null, upgradeLevel: 0 },
+    { name: "彰化", type: "land", group: "Central", price: 230, owner: null, upgradeLevel: 0 },
     { name: "南投", type: "action", price: 0 },
-    { name: "台中", type: "land", group: "North-C", price: 280, owner: null },
-    { name: "苗栗", type: "land", group: "North-C", price: 280, owner: null },
-    { name: "新竹", type: "land", group: "North-C", price: 280, owner: null },
+    { name: "台中", type: "land", group: "North-C", price: 280, owner: null, upgradeLevel: 0 },
+    { name: "苗栗", type: "land", group: "North-C", price: 280, owner: null, upgradeLevel: 0 },
+    { name: "新竹", type: "land", group: "North-C", price: 280, owner: null, upgradeLevel: 0 },
     { name: "桃園", type: "action", price: 0 },
-    { name: "台北", type: "land", group: "North", price: 300, owner: null },
-    { name: "新北", type: "land", group: "North", price: 300, owner: null },
-    { name: "金門", type: "land", group: "North", price: 300, owner: null },
-    { name: "基隆", type: "land", group: "North", price: 300, owner: null }
+    { name: "台北", type: "land", group: "North", price: 300, owner: null, upgradeLevel: 0 },
+    { name: "新北", type: "land", group: "North", price: 300, owner: null, upgradeLevel: 0 },
+    { name: "金門", type: "land", group: "North", price: 300, owner: null, upgradeLevel: 0 },
+    { name: "基隆", type: "land", group: "North", price: 300, owner: null, upgradeLevel: 0 }
 ];
 
 const playerProfiles = [
@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
             players: [{
                 id: socket.id,
                 name: playerName,
-                money: 2000, // 初始金錢降為 10%
+                money: 2000,
                 pos: 0,
                 profile: playerProfiles[0],
                 skipTurns: 0
@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
         room.players.push({
             id: socket.id,
             name: playerName,
-            money: 2000, // 初始金錢降為 10%
+            money: 2000,
             pos: 0,
             profile: playerProfiles[profileIndex],
             skipTurns: 0
@@ -121,6 +121,7 @@ io.on('connection', (socket) => {
             if (currentPlayer.money >= currentTile.price) {
                 currentPlayer.money -= currentTile.price;
                 currentTile.owner = currentPlayer.id;
+                currentTile.upgradeLevel = 0; // 初始化等級
                 let msg = `🏠 ${currentPlayer.name} 花費 ${currentTile.price} <br>成功買下【${currentTile.name}】！`;
                 io.to(socket.roomName).emit('centerAlert', msg);
                 io.to(socket.roomName).emit('log', msg.replace(/<br>/g, ' '));
@@ -146,6 +147,7 @@ io.on('connection', (socket) => {
                 if (ownerObj) ownerObj.money += buyoutPrice;
                 
                 currentTile.owner = currentPlayer.id;
+                currentTile.upgradeLevel = 0; // 重置等級
                 let msg = `💰 ${currentPlayer.name} 花費 ${buyoutPrice} (3倍) <br>強制收購了【${currentTile.name}】！`;
                 io.to(socket.roomName).emit('centerAlert', msg);
                 io.to(socket.roomName).emit('log', msg.replace(/<br>/g, ' '));
@@ -213,9 +215,9 @@ function startTurn(room) {
         let msg = `🎲 ${currentPlayer.name} 擲出了 ${dice} 點！<br>來到了【${currentTile.name}】`;
         
         if (currentPlayer.pos < oldPos || (currentPlayer.pos === 0 && dice > 0)) {
-            currentPlayer.money += 1000; // 起點薪水降為 10%
+            currentPlayer.money += 1000;
             msg += `<br>經過起點，領取薪水 1000！`;
-            io.to(room.roomName).emit('playSound', 'money'); // 觸發掉錢音效
+            io.to(room.roomName).emit('playSound', 'money');
         }
         
         io.to(room.roomName).emit('centerAlert', msg);
@@ -233,7 +235,20 @@ function handleTileEvent(room, player, tile) {
         if (!tile.owner) {
             io.to(player.id).emit('promptBuy', { price: tile.price, name: tile.name });
         } else if (tile.owner === player.id) {
-            io.to(room.roomName).emit('log', `${player.name} 回到了自己的地盤 ${tile.name}。`);
+            // 重複踩到自己地盤，觸發升級機制
+            if (tile.upgradeLevel === undefined) tile.upgradeLevel = 0;
+            
+            let msg = '';
+            if (tile.upgradeLevel < 2) {
+                tile.upgradeLevel++;
+                let multi = tile.upgradeLevel === 1 ? 2 : 4;
+                msg = `✨ ${player.name} 回到了自己的地盤【${tile.name}】！<br>地盤升級！過路費提升為 ${multi} 倍！`;
+            } else {
+                msg = `🐾 ${player.name} 回到了自己的地盤【${tile.name}】（過路費已達最高 4 倍）。`;
+            }
+
+            io.to(room.roomName).emit('centerAlert', msg);
+            io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' '));
             if (!nextTurn(room)) {
                 io.to(room.roomName).emit('updateGame', room);
                 startTurn(room);
@@ -242,6 +257,10 @@ function handleTileEvent(room, player, tile) {
             let ownerObj = room.players.find(p => p.id === tile.owner);
             let sameGroupCount = room.board.filter(b => b.group === tile.group && b.owner === tile.owner).length;
             let toll = Math.round(tile.price * 0.3 * Math.pow(2, sameGroupCount - 1));
+
+            // 根據升級等級乘上對應過路費倍數
+            if (tile.upgradeLevel === 1) toll *= 2;
+            else if (tile.upgradeLevel === 2) toll *= 4;
 
             if (player.money >= toll) {
                 player.money -= toll;
@@ -284,9 +303,9 @@ function handleTileEvent(room, player, tile) {
             let subMsg = `🎲 ${player.name} 再次擲出了 ${dice} 點！<br>來到了【${currentTile.name}】`;
             
             if (player.pos < oldPos || (player.pos === 0 && dice > 0)) {
-                player.money += 1000; // 起點薪水降為 10%
+                player.money += 1000;
                 subMsg += `<br>經過起點，領取薪水 1000！`;
-                io.to(room.roomName).emit('playSound', 'money'); // 觸發掉錢音效
+                io.to(room.roomName).emit('playSound', 'money');
             }
             
             io.to(room.roomName).emit('centerAlert', subMsg);
@@ -317,7 +336,6 @@ function handleTileEvent(room, player, tile) {
 }
 
 function handleCardEvent(room, player, isChance) {
-    // 所有的卡牌金錢數值全部降為 10%
     let effects = [];
     if (isChance) {
         effects = [
@@ -354,9 +372,10 @@ function handleCardEvent(room, player, isChance) {
         if (unownedLands.length > 0) {
             let targetLand = unownedLands[Math.floor(Math.random() * unownedLands.length)];
             targetLand.owner = player.id;
+            targetLand.upgradeLevel = 0;
             msg += `<span style="color:#FF7F7F">${choice.desc} 獲得了【${targetLand.name}】！</span>`;
         } else {
-            player.money += 200; // 場上沒空地的替代補償金錢降為 10%
+            player.money += 200;
             msg += `<span style="color:#FF7F7F">場上已無未被佔領的地盤，改為獲得獎勵 200！</span>`;
         }
     } else if (choice.type === 'land_lose') {
@@ -365,6 +384,7 @@ function handleCardEvent(room, player, isChance) {
             let targetLand = playerLands[Math.floor(Math.random() * playerLands.length)];
             let landName = targetLand.name;
             targetLand.owner = null;
+            targetLand.upgradeLevel = 0;
             msg += `<span style="color:#7F7FFF">${choice.desc} 失去了【${landName}】（變回無人佔領）！</span>`;
         } else {
             msg += `<span style="color:#7F7FFF">你目前名下沒有地盤可失去，逃過一劫！</span>`;
@@ -377,6 +397,7 @@ function handleCardEvent(room, player, isChance) {
             let randomIndex = Math.floor(Math.random() * allLands.length);
             let targetLand = allLands.splice(randomIndex, 1)[0];
             targetLand.owner = player.id;
+            targetLand.upgradeLevel = 0;
             grabbedNames.push(targetLand.name);
         }
         if (grabbedNames.length > 0) {
@@ -392,9 +413,8 @@ function handleCardEvent(room, player, isChance) {
 
     io.to(room.roomName).emit('centerAlert', msg);
     io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' ').replace(/<[^>]+>/g, ''));
-    io.to(room.roomName).emit('updateGame', room); // 先更新畫面，讓大家看到錢的變動
+    io.to(room.roomName).emit('updateGame', room);
 
-    // 加入 3 秒鐘延遲，讓大家看完卡牌內容，再輪到下一位
     setTimeout(() => {
         if (!nextTurn(room)) {
             io.to(room.roomName).emit('updateGame', room);

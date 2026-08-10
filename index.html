@@ -166,6 +166,35 @@
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
+        /* 地盤升級小方塊旋轉樣式與動畫 */
+        @keyframes spinSquare {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .upg-black {
+            position: absolute; 
+            top: 6px; 
+            right: 6px;
+            width: 12px; 
+            height: 12px; 
+            background: #000000;
+            border-radius: 2px;
+            animation: spinSquare 2s linear infinite;
+            z-index: 5;
+        }
+        .upg-white {
+            position: absolute; 
+            top: 6px; 
+            right: 22px;
+            width: 12px; 
+            height: 12px; 
+            background: #FFFFFF; 
+            border: 1px solid #000000;
+            border-radius: 2px;
+            animation: spinSquare 2s linear infinite reverse;
+            z-index: 5;
+        }
+
         @keyframes popIn {
             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
@@ -181,6 +210,9 @@
     </style>
 </head>
 <body>
+
+    <!-- 遊戲背景音樂元件 -->
+    <audio id="bgm" src="/Rich.mp3" loop></audio>
 
     <div id="lobby-screen" class="card-box" style="margin-top: 20px;">
         <img src="/gogo.png" alt="Gogo Taiwan" style="width: 70%; height: auto; margin-bottom: 15px; object-fit: contain;">
@@ -228,6 +260,29 @@
     </div>
 
     <script>
+        // 背景音樂控制邏輯
+        const bgm = document.getElementById('bgm');
+
+        function playBGM() {
+            if (bgm) {
+                bgm.play().catch(err => {
+                    console.log('瀏覽器阻擋自動播放，等待使用者互動：', err);
+                });
+            }
+        }
+
+        window.addEventListener('load', () => {
+            playBGM();
+        });
+
+        // 點擊頁面任意處解除瀏覽器自動播放限制
+        document.addEventListener('click', () => {
+            if (bgm && bgm.paused) {
+                playBGM();
+            }
+        }, { once: true });
+
+
         const socket = io();
         let countdownTimer = null;
         let toastTimer = null; 
@@ -251,7 +306,7 @@
 
         socket.on('errorMsg', (msg) => { alert(msg); });
 
-        // 新增音效監聽
+        // 音效監聽
         socket.on('playSound', (type) => {
             if (type === 'money') {
                 const audio = new Audio('/money.mp3');
@@ -294,6 +349,12 @@
 
         socket.on('gameOver', (ranking) => {
             clearTimeout(toastTimer); 
+
+            // 遊戲結束，重頭播放背景音樂
+            if (bgm) {
+                bgm.currentTime = 0; 
+                playBGM();
+            }
             
             let html = `<div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; color: #5A4A42;">🏆 排行榜 🏆</div>`;
             ranking.forEach((r, idx) => {
@@ -472,6 +533,14 @@
 
                 let html = `<div style="${nameColorStyle}">${tile.name}</div>`;
                 if (tile.price > 0) html += `<span>${tile.price}</span>`;
+
+                // 根據升級等級顯示旋轉黑/白小方塊
+                if (tile.upgradeLevel >= 1) {
+                    html += `<div class="upg-black"></div>`;
+                }
+                if (tile.upgradeLevel >= 2) {
+                    html += `<div class="upg-white"></div>`;
+                }
 
                 let tokensHtml = '<div class="player-avatars">';
                 room.players.forEach(p => {
