@@ -241,10 +241,11 @@ function handleTileEvent(room, player, tile) {
             let msg = '';
             if (tile.upgradeLevel < 2) {
                 tile.upgradeLevel++;
-                let multi = tile.upgradeLevel === 1 ? 2 : 4;
+                // 升級 1 次過路費為 3 倍，升級 2 次過路費為 6 倍
+                let multi = tile.upgradeLevel === 1 ? 3 : 6;
                 msg = `✨ ${player.name} 回到了自己的地盤【${tile.name}】！<br>地盤升級！過路費提升為 ${multi} 倍！`;
             } else {
-                msg = `🐾 ${player.name} 回到了自己的地盤【${tile.name}】（過路費已達最高 4 倍）。`;
+                msg = `🐾 ${player.name} 回到了自己的地盤【${tile.name}】（過路費已達最高 6 倍）。`;
             }
 
             io.to(room.roomName).emit('centerAlert', msg);
@@ -256,11 +257,13 @@ function handleTileEvent(room, player, tile) {
         } else {
             let ownerObj = room.players.find(p => p.id === tile.owner);
             let sameGroupCount = room.board.filter(b => b.group === tile.group && b.owner === tile.owner).length;
-            let toll = Math.round(tile.price * 0.3 * Math.pow(2, sameGroupCount - 1));
+            
+            // 基礎過路費 50% * 同色系列加成 (Math.pow 2的(數量-1)次方)
+            let toll = Math.round(tile.price * 0.5 * Math.pow(2, sameGroupCount - 1));
 
-            // 根據升級等級乘上對應過路費倍數
-            if (tile.upgradeLevel === 1) toll *= 2;
-            else if (tile.upgradeLevel === 2) toll *= 4;
+            // 根據升級等級乘上對應過路費倍數加成
+            if (tile.upgradeLevel === 1) toll *= 3;
+            else if (tile.upgradeLevel === 2) toll *= 6;
 
             if (player.money >= toll) {
                 player.money -= toll;
