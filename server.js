@@ -195,16 +195,18 @@ function startTurn(room) {
         io.to(room.roomName).emit('log', msg);
         io.to(room.roomName).emit('updateGame', room);
         
+        // 動作間隔改為 2000 毫秒
         setTimeout(() => {
             if (!nextTurn(room)) {
                 startTurn(room);
             }
-        }, 5000); 
+        }, 2000); 
         return;
     }
 
     io.to(room.roomName).emit('updateGame', room);
 
+    // 擲骰子動畫短暫等待，保留 1500 讓玩家看清楚數字
     setTimeout(() => {
         if (!room.started) return;
         let dice = Math.floor(Math.random() * 6) + 1;
@@ -224,9 +226,10 @@ function startTurn(room) {
         io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' '));
         io.to(room.roomName).emit('updateGame', room);
 
+        // 動作間隔改為 2000 毫秒
         setTimeout(() => {
             handleTileEvent(room, currentPlayer, currentTile);
-        }, 5000); 
+        }, 2000); 
     }, 1500);
 }
 
@@ -270,9 +273,10 @@ function handleTileEvent(room, player, tile) {
                 io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' '));
                 io.to(room.roomName).emit('updateGame', room);
                 
+                // 動作間隔改為 2000 毫秒，然後提示是否強制收購
                 setTimeout(() => {
-                    io.to(player.id).emit('promptBuyout', { price: tile.price * 2, money: player.money, name: tile.name }); // 改為 2 倍價格提示
-                }, 5000); 
+                    io.to(player.id).emit('promptBuyout', { price: tile.price * 2, money: player.money, name: tile.name }); 
+                }, 2000); 
             } else {
                 player.money = 2000;
                 player.pos = 0;
@@ -294,6 +298,7 @@ function handleTileEvent(room, player, tile) {
         io.to(room.roomName).emit('centerAlert', msg);
         io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' '));
 
+        // 動作間隔改為 2000 毫秒
         setTimeout(() => {
             let dice = Math.floor(Math.random() * 6) + 1;
             let oldPos = player.pos;
@@ -312,10 +317,11 @@ function handleTileEvent(room, player, tile) {
             io.to(room.roomName).emit('log', subMsg.replace(/<br>/g, ' '));
             io.to(room.roomName).emit('updateGame', room);
 
+            // 動作間隔改為 2000 毫秒
             setTimeout(() => {
                 handleTileEvent(room, player, currentTile);
-            }, 5000); 
-        }, 5000); 
+            }, 2000); 
+        }, 2000); 
 
     } else if (tile.name === "桃園") {
         player.pos = 5; 
@@ -476,19 +482,20 @@ function handleCardEvent(room, player, isChance) {
     io.to(room.roomName).emit('log', msg.replace(/<br>/g, ' ').replace(/<[^>]+>/g, ''));
     io.to(room.roomName).emit('updateGame', room);
 
+    // 動作間隔改為 2000 毫秒
     setTimeout(() => {
         if (!nextTurn(room)) {
             io.to(room.roomName).emit('updateGame', room);
             startTurn(room);
         }
-    }, 3000);
+    }, 2000);
 }
 
 function nextTurn(room) {
     room.turnIndex = (room.turnIndex + 1) % room.players.length;
     if (room.turnIndex === 0) {
         room.round++;
-        // 修改處：將原先的 20 輪改為 30 輪
+        // 修改為 30 輪結束
         if (room.round > 30) {
             room.started = false;
             let ranking = room.players.map(p => {

@@ -346,7 +346,8 @@
             toast.style.width = 'auto';
             toast.style.maxWidth = 'none';
             
-            toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 5000); 
+            // 將中央提示訊息的停留時間改為 2 秒 (2000 毫秒)
+            toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2000); 
         });
 
         socket.on('gameOver', (ranking) => {
@@ -405,7 +406,8 @@
             let currentPlayer = room.players[room.turnIndex];
             let topTurnArea = document.getElementById('top-turn-area');
             
-            let statusText = room.started ? `輪到 ${currentPlayer ? currentPlayer.name : ''} 進行操作 (第 ${room.round}/20 輪)` : '遊戲準備中';
+            // 修正為 30 輪顯示
+            let statusText = room.started ? `輪到 ${currentPlayer ? currentPlayer.name : ''} 進行操作 (第 ${room.round}/30 輪)` : '遊戲準備中';
             topTurnArea.innerHTML = `<span style="font-size: 1.2rem; color: #B8A89A; font-weight: bold;">${statusText}</span>`;
         });
 
@@ -416,6 +418,7 @@
             topTurnArea.style.display = 'none';
             box.style.display = 'block';
             
+            // 點按鈕時給予 5 秒思考時間
             let timeLeft = 5;
             document.getElementById('countdown').innerText = timeLeft;
             countdownTimer = setInterval(() => {
@@ -455,6 +458,7 @@
                 btn.title = "";
             }
 
+            // 點按鈕時給予 5 秒思考時間
             let timeLeft = 5;
             countdownTimer = setInterval(() => {
                 timeLeft--;
