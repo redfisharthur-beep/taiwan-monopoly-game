@@ -346,9 +346,7 @@ function handleCardEvent(room, player, isChance) {
             { type: 'land_lose', desc: '真不幸...隨機失去一塊已佔領的地盤！', isReward: false },
             { type: 'land_grab_three', desc: '逆轉勝來了！隨機豪取 3 塊地盤（無論是否有所屬）！', isReward: true },
             { type: 'money', val: 3000, desc: '天選之人，恭喜中樂透！獲得 3000 獎金！', isReward: true },
-            // 新增機會選項：慈善家
             { type: 'philanthropist', desc: '慈善家！現金最多的玩家，施捨給現金最少的玩家 1000元', isReward: true },
-            // 新增機會選項：歡迎斗內
             { type: 'welcome_donate', desc: '歡迎斗內~每人都捐 300元，給抽到此牌的玩家', isReward: true }
         ];
     } else {
@@ -359,9 +357,7 @@ function handleCardEvent(room, player, isChance) {
             { type: 'money', val: -50, desc: '遭遇倒霉事...失去 50！', isReward: false },
             { type: 'land_lose', desc: '真不幸...隨機失去一塊已佔領的地盤！', isReward: false },
             { type: 'travel_forced', desc: '出差辛苦了~強制移動到旅行中，暫停 2 回合！', isReward: false },
-            // 新增命運選項：土地施捨
             { type: 'land_charity', desc: '土地最多的玩家，隨機施捨 1 塊土地給「土地最少的玩家」', isReward: false },
-            // 新增命運選項：豪氣沖天
             { type: 'generous_rain', desc: '豪氣沖天！抽到此牌的玩家，發給每人 200元', isReward: false }
         ];
     }
@@ -418,7 +414,6 @@ function handleCardEvent(room, player, isChance) {
         player.skipTurns = 2;
         msg += `<span style="color:#7F7FFF">${choice.desc}</span>`;
     } else if (choice.type === 'philanthropist') {
-        // 現金最多的玩家，施捨給現金最少的玩家 1000元
         let sortedPlayers = [...room.players].sort((a, b) => b.money - a.money);
         let richest = sortedPlayers[0];
         let poorest = sortedPlayers[sortedPlayers.length - 1];
@@ -432,7 +427,6 @@ function handleCardEvent(room, player, isChance) {
             msg += `<span style="color:#FF7F7F">${choice.desc}<br>${richest.name} 施捨了 ${giveAmount} 元給 ${poorest.name}！</span>`;
         }
     } else if (choice.type === 'welcome_donate') {
-        // 每人都捐 300元，給抽到此牌的玩家
         let totalCollected = 0;
         room.players.forEach(p => {
             if (p.id !== player.id) {
@@ -444,7 +438,6 @@ function handleCardEvent(room, player, isChance) {
         player.money += totalCollected;
         msg += `<span style="color:#FF7F7F">${choice.desc}<br>總共獲得了 ${totalCollected} 元斗內！</span>`;
     } else if (choice.type === 'land_charity') {
-        // 土地最多的玩家，隨機施捨 1塊土地給"土地最少的玩家"
         let landCounts = room.players.map(p => {
             let lands = room.board.filter(b => b.type === 'land' && b.owner === p.id);
             return { player: p, lands: lands };
@@ -460,16 +453,14 @@ function handleCardEvent(room, player, isChance) {
             let randomLandIdx = Math.floor(Math.random() * richestOwner.lands.length);
             let transferredLand = richestOwner.lands[randomLandIdx];
             transferredLand.owner = poorestOwner.player.id;
-            transferredLand.upgradeLevel = 0; // 重置升級
+            transferredLand.upgradeLevel = 0; 
             msg += `<span style="color:#7F7FFF">${choice.desc}<br>${richestOwner.player.name} 將【${transferredLand.name}】施捨給了 ${poorestOwner.player.name}！</span>`;
         }
     } else if (choice.type === 'generous_rain') {
-        // 豪氣沖天！抽到此牌的玩家，發給每人 200元
         let otherPlayers = room.players.filter(p => p.id !== player.id);
         let totalCost = otherPlayers.length * 200;
         
         if (player.money < totalCost) {
-            // 現金不夠發時，改為有幾分錢發幾分錢
             let actualPerPerson = Math.floor(player.money / (otherPlayers.length || 1));
             otherPlayers.forEach(p => p.money += actualPerPerson);
             player.money = 0;
@@ -497,7 +488,8 @@ function nextTurn(room) {
     room.turnIndex = (room.turnIndex + 1) % room.players.length;
     if (room.turnIndex === 0) {
         room.round++;
-        if (room.round > 20) {
+        // 修改處：將原先的 20 輪改為 30 輪
+        if (room.round > 30) {
             room.started = false;
             let ranking = room.players.map(p => {
                 let landValue = room.board.filter(b => b.owner === p.id).reduce((sum, b) => sum + b.price, 0);
