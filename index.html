@@ -166,33 +166,34 @@
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* 地盤升級小方塊旋轉樣式與動畫 */
-        @keyframes spinSquare {
+        /* 地盤升級金色星星旋轉樣式與動畫 */
+        @keyframes spinStar {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .upg-black {
+        
+        /* 小金色星星 (升級 1 次) */
+        .star-level-1 {
             position: absolute; 
-            top: 6px; 
-            right: 6px;
-            width: 12px; 
-            height: 12px; 
-            background: #000000;
-            border-radius: 2px;
-            animation: spinSquare 2s linear infinite;
+            top: 4px; 
+            right: 4px;
+            font-size: 15px;
+            animation: spinStar 3s linear infinite;
             z-index: 5;
+            line-height: 1;
+            user-select: none;
         }
-        .upg-white {
+
+        /* 大金色星星 (升級 2 次) */
+        .star-level-2 {
             position: absolute; 
-            top: 6px; 
-            right: 22px;
-            width: 12px; 
-            height: 12px; 
-            background: #FFFFFF; 
-            border: 1px solid #000000;
-            border-radius: 2px;
-            animation: spinSquare 2s linear infinite reverse;
+            top: 2px; 
+            right: 2px;
+            font-size: 24px;
+            animation: spinStar 2.5s linear infinite;
             z-index: 5;
+            line-height: 1;
+            user-select: none;
         }
 
         @keyframes popIn {
@@ -534,12 +535,11 @@
                 let html = `<div style="${nameColorStyle}">${tile.name}</div>`;
                 if (tile.price > 0) html += `<span>${tile.price}</span>`;
 
-                // 根據升級等級顯示旋轉黑/白小方塊
-                if (tile.upgradeLevel >= 1) {
-                    html += `<div class="upg-black"></div>`;
-                }
-                if (tile.upgradeLevel >= 2) {
-                    html += `<div class="upg-white"></div>`;
+                // 根據升級等級顯示旋轉金色星星
+                if (tile.upgradeLevel === 1) {
+                    html += `<div class="star-level-1">⭐</div>`;
+                } else if (tile.upgradeLevel >= 2) {
+                    html += `<div class="star-level-2">⭐</div>`;
                 }
 
                 let tokensHtml = '<div class="player-avatars">';
